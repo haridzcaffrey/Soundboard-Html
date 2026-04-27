@@ -22,3 +22,13 @@
 
 # OS generated files
 Thumbs.db
+
+# MeshClaw workspace files
+memory/
+HEARTBEAT.md
+dream-state.json
+autosim-*.js
+ACME4_Troubleshooting_Guide.md
+RAM_Upgrade_Booking_Proposal.md
+*.py
+paper_trader*
