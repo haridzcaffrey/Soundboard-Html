@@ -5,249 +5,194 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enhanced Soundboard</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #f0f0f0;
-        }
-        .soundboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+        h1 { margin-bottom: 10px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .instructions { color: #555; font-size: 14px; }
+        .manage-toggle { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; }
+        .manage-toggle.edit { background: #faad14; color: #fff; }
+        .manage-toggle.save { background: #52c41a; color: #fff; }
+        .soundboard { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
         .sound-button {
-            height: 120px;
-            border: 2px dashed #ccc;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            background-color: white;
-            transition: all 0.2s;
-            position: relative;
-            overflow: hidden;
+            height: 130px; border: 2px dashed #ccc; border-radius: 10px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; background: #fff; transition: all 0.2s; position: relative; user-select: none;
         }
-        .sound-button:hover {
-            background-color: #e6f7ff;
-            border-color: #1890ff;
+        .sound-button:hover { background: #e6f7ff; border-color: #1890ff; }
+        .sound-button.has-sound { border-style: solid; background: #f0f8ff; }
+        .sound-button.selected { box-shadow: 0 0 0 3px #1890ff; }
+        .sound-button.drag-over { border-color: #52c41a; background: #f6ffed; border-width: 3px; }
+        .sound-button audio { display: none; }
+        .button-label { text-align: center; padding: 4px 8px; font-size: 12px; word-break: break-word; color: #333; }
+        .play-icon { font-size: 32px; color: #1890ff; margin-bottom: 4px; }
+        .upload-icon { font-size: 28px; color: #aaa; margin-bottom: 4px; }
+        .volume-wrap { width: 85%; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+        .volume-wrap input { flex: 1; }
+        .volume-label { font-size: 10px; color: #888; min-width: 28px; text-align: right; }
+        /* Manage mode overlay controls */
+        .manage-controls {
+            display: none; position: absolute; inset: 0; background: rgba(255,255,255,0.95);
+            border-radius: 10px; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
         }
-        .sound-button.has-sound {
-            border-style: solid;
-            background-color: #f0f8ff;
-        }
-        .sound-button audio {
-            display: none;
-        }
-        .button-controls {
-            display: flex;
-            gap: 5px;
-            margin-top: 5px;
-        }
-        .control-btn {
-            padding: 2px 6px;
-            font-size: 10px;
-            cursor: pointer;
-            background: #1890ff;
-            color: white;
-            border: none;
-            border-radius: 3px;
-        }
-        .control-btn.delete {
-            background: #ff4d4f;
-        }
-        .volume-slider {
-            width: 80%;
-            margin: 5px 0;
-            display: none;
-        }
-        .button-label {
-            text-align: center;
-            padding: 5px;
-            width: 100%;
-            word-break: break-word;
-            font-size: 12px;
-        }
-        .upload-area {
-            margin-bottom: 20px;
-            padding: 20px;
-            border: 2px dashed #1890ff;
-            border-radius: 8px;
-            text-align: center;
-            background-color: #e6f7ff;
-        }
-        .instructions {
-            margin-bottom: 10px;
-            color: #555;
-        }
-        .keyboard-shortcuts {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #fffbe6;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .shortcut-key {
-            display: inline-block;
-            padding: 2px 6px;
-            background: #f0f0f0;
-            border: 1px solid #d9d9d9;
-            border-radius: 4px;
-            font-weight: bold;
-            margin: 0 2px;
-        }
+        .managing .manage-controls { display: flex; }
+        .manage-btn { padding: 6px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .manage-btn.replace { background: #1890ff; color: #fff; }
+        .manage-btn.delete { background: #ff4d4f; color: #fff; }
+        .keyboard-shortcuts { margin-top: 20px; padding: 10px; background: #fffbe6; border-radius: 4px; font-size: 14px; }
+        .shortcut-key { display: inline-block; padding: 2px 6px; background: #f0f0f0; border: 1px solid #d9d9d9; border-radius: 4px; font-weight: bold; margin: 0 2px; }
+        input[type="file"] { display: none; }
     </style>
 </head>
 <body>
     <h1>Enhanced Soundboard</h1>
-    
-    <div class="upload-area">
-        <div class="instructions">Click a button below to assign a sound, then click the button to play</div>
-        <input type="file" id="soundUpload" accept="audio/*" style="display: none;">
+    <div class="top-bar">
+        <div class="instructions" id="instructions">Click or drag an audio file onto a button. Click ▶ to play.</div>
+        <button class="manage-toggle edit" id="manageBtn" onclick="toggleManage()">⚙ Manage</button>
     </div>
-    
-    <div class="soundboard" id="soundboard">
-        <!-- Sound buttons will be generated here -->
-    </div>
-    
+    <input type="file" id="soundUpload" accept="audio/*">
+    <div class="soundboard" id="soundboard"></div>
     <div class="keyboard-shortcuts">
         <strong>Keyboard Shortcuts:</strong>
-        <div>Keys <span class="shortcut-key">1</span> to <span class="shortcut-key">9</span> for buttons 1-9</div>
-        <div>Keys <span class="shortcut-key">Q</span>, <span class="shortcut-key">W</span>, <span class="shortcut-key">E</span> for buttons 10-12</div>
-        <div><span class="shortcut-key">Delete</span> or <span class="shortcut-key">Backspace</span> to remove sound from selected button</div>
+        <span class="shortcut-key">1</span>–<span class="shortcut-key">9</span> buttons 1-9 |
+        <span class="shortcut-key">Q</span> <span class="shortcut-key">W</span> <span class="shortcut-key">E</span> buttons 10-12 |
+        <span class="shortcut-key">Del</span> remove sound from selected button
     </div>
-
     <script>
-        let selectedButton = null;
+        let selectedButton = null, manageMode = false;
         const soundboard = document.getElementById('soundboard');
         const soundUpload = document.getElementById('soundUpload');
+        const manageBtn = document.getElementById('manageBtn');
+        const instructions = document.getElementById('instructions');
         const buttons = [];
-        
-        // Create 12 sound buttons
+
+        function toggleManage() {
+            manageMode = !manageMode;
+            manageBtn.textContent = manageMode ? '✓ Save' : '⚙ Manage';
+            manageBtn.className = 'manage-toggle ' + (manageMode ? 'save' : 'edit');
+            instructions.textContent = manageMode
+                ? 'Manage mode: Replace or delete sounds. Click Save when done.'
+                : 'Click or drag an audio file onto a button. Click ▶ to play.';
+            buttons.forEach(b => b.classList.toggle('managing', manageMode && b.classList.contains('has-sound')));
+        }
+
+        function resetButton(btn) {
+            const i = btn.dataset.index;
+            const audio = btn.querySelector('audio');
+            audio.src = ''; audio.removeAttribute('src');
+            btn.querySelector('.button-label').textContent = 'Button ' + i;
+            btn.querySelector('.volume-wrap input').value = 1;
+            btn.classList.remove('has-sound', 'managing', 'selected');
+        }
+
+        function assignSound(btn, file) {
+            const audio = btn.querySelector('audio');
+            audio.src = URL.createObjectURL(file);
+            btn.querySelector('.button-label').textContent = file.name.length > 18 ? file.name.substring(0, 18) + '…' : file.name;
+            btn.classList.add('has-sound');
+            if (manageMode) btn.classList.add('managing');
+        }
+
         for (let i = 1; i <= 12; i++) {
-            const button = document.createElement('div');
-            button.className = 'sound-button';
-            button.dataset.index = i;
-            button.innerHTML = `
+            const btn = document.createElement('div');
+            btn.className = 'sound-button';
+            btn.dataset.index = i;
+            btn.innerHTML = `
+                <div class="upload-icon">＋</div>
+                <div class="play-icon" style="display:none">▶</div>
                 <div class="button-label">Button ${i}</div>
-                <input type="range" class="volume-slider" min="0" max="1" step="0.01" value="1">
-                <div class="button-controls">
-                    <button class="control-btn delete" title="Delete sound">✕</button>
+                <div class="volume-wrap" style="display:none"><input type="range" min="0" max="1" step="0.01" value="1"><span class="volume-label">100%</span></div>
+                <div class="manage-controls">
+                    <button class="manage-btn replace">🔄 Replace</button>
+                    <button class="manage-btn delete">🗑 Delete</button>
                 </div>
-                <audio></audio>
-            `;
-            
-            const audio = button.querySelector('audio');
-            const volumeSlider = button.querySelector('.volume-slider');
-            const deleteBtn = button.querySelector('.delete');
-            
-            // Play sound on button click
-            button.addEventListener('click', (e) => {
-                if (e.target === deleteBtn) return;
-                
-                // Highlight selected button
-                document.querySelectorAll('.sound-button').forEach(btn => {
-                    btn.style.boxShadow = btn === button ? '0 0 0 2px #1890ff' : '';
-                });
-                selectedButton = button;
-                
-                if (audio.src) {
-                    // Play sound if already assigned
+                <audio></audio>`;
+
+            const audio = btn.querySelector('audio');
+            const volWrap = btn.querySelector('.volume-wrap');
+            const volSlider = volWrap.querySelector('input');
+            const volLabel = volWrap.querySelector('.volume-label');
+            const playIcon = btn.querySelector('.play-icon');
+            const uploadIcon = btn.querySelector('.upload-icon');
+
+            // Update icons based on has-sound state
+            const syncIcons = () => {
+                const has = btn.classList.contains('has-sound');
+                playIcon.style.display = has ? '' : 'none';
+                uploadIcon.style.display = has ? 'none' : '';
+                volWrap.style.display = has ? '' : 'none';
+            };
+            new MutationObserver(syncIcons).observe(btn, { attributes: true, attributeFilter: ['class'] });
+
+            btn.addEventListener('click', (e) => {
+                if (e.target.closest('.manage-controls') || e.target.closest('.volume-wrap')) return;
+                // Select
+                buttons.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedButton = btn;
+
+                if (manageMode) return;
+                if (audio.src && audio.src !== location.href) {
                     audio.currentTime = 0;
-                    audio.volume = parseFloat(volumeSlider.value);
+                    audio.volume = parseFloat(volSlider.value);
                     audio.play();
                 } else {
-                    // Select button for sound assignment
                     soundUpload.click();
                 }
             });
-            
-            // Volume control
-            volumeSlider.addEventListener('input', () => {
-                audio.volume = parseFloat(volumeSlider.value);
+
+            volSlider.addEventListener('input', () => {
+                audio.volume = parseFloat(volSlider.value);
+                volLabel.textContent = Math.round(volSlider.value * 100) + '%';
             });
-            
-            // Toggle volume slider visibility
-            button.addEventListener('mouseenter', () => {
-                if (audio.src) {
-                    volumeSlider.style.display = 'block';
-                }
-            });
-            
-            button.addEventListener('mouseleave', () => {
-                volumeSlider.style.display = 'none';
-            });
-            
-            // Delete sound
-            deleteBtn.addEventListener('click', (e) => {
+
+            btn.querySelector('.manage-btn.replace').addEventListener('click', (e) => {
                 e.stopPropagation();
-                audio.src = '';
-                button.querySelector('.button-label').textContent = `Button ${i}`;
-                button.classList.remove('has-sound');
-                volumeSlider.value = 1;
+                selectedButton = btn;
+                soundUpload.click();
             });
-            
-            soundboard.appendChild(button);
-            buttons.push(button);
+
+            btn.querySelector('.manage-btn.delete').addEventListener('click', (e) => {
+                e.stopPropagation();
+                resetButton(btn);
+            });
+
+            // Drag-and-drop
+            btn.addEventListener('dragover', (e) => { e.preventDefault(); btn.classList.add('drag-over'); });
+            btn.addEventListener('dragleave', () => btn.classList.remove('drag-over'));
+            btn.addEventListener('drop', (e) => {
+                e.preventDefault();
+                btn.classList.remove('drag-over');
+                const file = [...e.dataTransfer.files].find(f => f.type.startsWith('audio/'));
+                if (file) assignSound(btn, file);
+            });
+
+            soundboard.appendChild(btn);
+            buttons.push(btn);
         }
-        
-        // Handle sound file upload
+
         soundUpload.addEventListener('change', (e) => {
             if (!selectedButton || !e.target.files.length) return;
-            
-            const file = e.target.files[0];
-            const url = URL.createObjectURL(file);
-            const audio = selectedButton.querySelector('audio');
-            const label = selectedButton.querySelector('.button-label');
-            
-            audio.src = url;
-            label.textContent = file.name.substring(0, 20) + (file.name.length > 20 ? '...' : '');
-            selectedButton.classList.add('has-sound');
-            
-            // Reset selection
-            selectedButton.style.boxShadow = '';
+            assignSound(selectedButton, e.target.files[0]);
+            selectedButton.classList.remove('selected');
             selectedButton = null;
             soundUpload.value = '';
         });
-        
-        // Keyboard shortcuts
+
+        // Reset selection if user cancels file picker
+        soundUpload.addEventListener('click', function() {
+            this.value = '';
+        });
+
+        // Prevent browser from opening dropped files
+        document.addEventListener('dragover', (e) => e.preventDefault());
+        document.addEventListener('drop', (e) => e.preventDefault());
+
         document.addEventListener('keydown', (e) => {
-            // Number keys 1-9 for buttons 1-9
-            if (e.key >= '1' && e.key <= '9') {
-                const index = parseInt(e.key) - 1;
-                if (buttons[index]) {
-                    buttons[index].click();
-                }
-                return;
-            }
-            
-            // Q, W, E for buttons 10, 11, 12
-            if (e.key === 'q' || e.key === 'Q') {
-                if (buttons[9]) buttons[9].click();
-                return;
-            }
-            if (e.key === 'w' || e.key === 'W') {
-                if (buttons[10]) buttons[10].click();
-                return;
-            }
-            if (e.key === 'e' || e.key === 'E') {
-                if (buttons[11]) buttons[11].click();
-                return;
-            }
-            
-            // Delete/Backspace to remove sound from selected button
+            if (manageMode) return;
+            const map = {'1':0,'2':1,'3':2,'4':3,'5':4,'6':5,'7':6,'8':7,'9':8,'q':9,'w':10,'e':11,'Q':9,'W':10,'E':11};
+            if (e.key in map) { buttons[map[e.key]]?.click(); return; }
             if ((e.key === 'Delete' || e.key === 'Backspace') && selectedButton) {
-                const audio = selectedButton.querySelector('audio');
-                const label = selectedButton.querySelector('.button-label');
-                const index = parseInt(selectedButton.dataset.index);
-                
-                audio.src = '';
-                label.textContent = `Button ${index}`;
-                selectedButton.classList.remove('has-sound');
-                selectedButton.querySelector('.volume-slider').value = 1;
-                return;
+                resetButton(selectedButton); selectedButton = null;
             }
         });
     </script>
