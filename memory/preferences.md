@@ -1,0 +1,60 @@
+# User Preferences
+
+<!-- Learned from conversations -->
+- Location: SIN18 Singapore (unfabric site - no corp WiFi, regular internet only)
+- Role: IT Support Technician (mnharidz)
+- Timezone: SGT (UTC+8)
+- Worklog style: ITSE Notes format with step-by-step bullets
+- Troubleshooting approach: Document→Check firmware→Software fix→Hardware reset→Verify
+- Resolver groups: IT-Support-Onsite-APAC (primary), IT-Support-APAC, AV-Support-APAC, ITS-Logistics-APAC
+- Output preference: Silent research, single final response only (no intermediate agent updates)
+- Correspondence style: Brief summary of actions taken for user acknowledgment
+- Debugging preference: Incremental testing (one component at a time)
+- Correction style: User provides actual working steps from KB/experience when AI suggestions are incorrect
+- KB priority: Always prioritize IT portal KB articles over wiki commands—user will correct with approved KB steps
+- Learning approach: When user says 'check the KB' or 'this is incorrect', stop suggesting and ask user to share correct steps
+- Ticket title format: 1-50 characters, concise problem statement
+- Research approach: When subagents rate-limited, use direct sequential tool calls instead of retrying spawns - faster and more reliable
+- KB reference requirement: ALWAYS include relevant IT portal KB article links in every worklog and resolution, even for hardware troubleshooting steps like BIOS updates and power resets
+- KB limitation: IT portal articles are JS-rendered and cannot be scraped for step-by-step content—only titles and URLs are accessible
+- Tool constraints: Microsoft Bookings disabled, Google Suite blocked by Amazon policy, must use Amazon-approved tools only
+- Automation preference: Full end-to-end automation preferred over manual processes when scaling to 600+ users
+- Development workflow: ALWAYS spawn subagents for all implementation work. Act as coordinator only - review, approve, control direction. Subagents do ALL heavy lifting (writing code, testing, debugging). DO NOT write code directly.
+- Development approach: Build local prototype first, test thoroughly, then deploy to AWS. For AWS: burner app first (test architecture), then graduate to permanent pipeline.
+- Documentation style: Create comprehensive team guides from ticket worklogs for knowledge sharing
+- Code repository path: /Users/mnharidz/Library/CloudStorage/WorkDocsDrive-Documents/Desktop for all projects
+- Finance tracking: Account-level tracking with manual transaction entry, independent from banking systems for security
+- Design preference: Dark mode, Apple/Google-inspired color schemes, smooth animations, modern fluid layouts
+- UI preference: Clickable cards with detail views, visible add buttons per section, linked transactions to accounts, distinct colors for different states (expense=red, inflow=green), no redundant floating buttons, bulk management with checkboxes for both bookings and outreach
+- Cache management: Always use version query params (?v=N) on static assets, increment with each update to force browser refresh
+- Terminology preference: Use 'Inflow' instead of 'Income' for incoming money (more general term covering salary, transfers, reimbursements, investments, gifts, freelance, etc.)
+- Trading interest: XAUUSD scalping and intraday strategies
+- Trading session preference: London open and London/NY overlap (15:00-22:00 SGT) for highest volatility and liquidity
+- Trading automation: Paper trading simulator preferred over live auto-execution for strategy validation
+- AWS deployment preference: Test with burner application first (configurable lifespan), then graduate to permanent pipeline deployment
+- BuilderHub Create naming: Clone names should be alphanumeric, capital first letter, avoid hyphens to prevent template rejection
+- BuilderHub Create URL: https://create.hub.amazon.dev/?section=packages (old code.amazon.com/packages/new is deprecated)
+- Development environment: Prefer Mac for Brazil workspace when possible, Cloud Desktop as fallback for build issues
+- Cloud Desktop fleet: Found team fleet during setup, selected for cost allocation
+- Waiting strategy: Port code on Mac while Cloud Desktop provisions rather than waiting idle
+- Travel booking: Uses Spotnana for corporate travel (no AI access)
+- Cloud Desktop setup: Requires mwinit -o on Cloud Desktop itself (Mac cert doesn't carry over via SSH), toolbox install brazilcli (not 'brazil'), SSH commands need full PATH or ~/.toolbox/bin prefix
+- Ticket analysis preference: Deep dives on specific issue patterns with regional breakdowns and temporal trends, iterative search refinement when initial results seem incomplete
+- Script deployment: When SSH quoting fails, write script locally and scp to remote host for execution
+- CDK variable interpolation: Use ${} not \${} in template strings - escaped dollar signs pass literals causing validation errors
+- API Gateway logging: Disable with MethodLoggingLevel.OFF if account lacks CloudWatch role ARN to prevent CFN failures
+- CloudFront API routing: Use additionalBehaviors for /api/* paths to route to API Gateway origin, not S3
+- Git push to code.amazon.com: For non-Brazil repos, cr CLI won't work without proper workspace metadata. Fix: add versionSet and dependencyModel to packageInfo, create release-info/versionSets file. Use --destination-branch mainline to avoid Dry Run Build fault.
+- CR merge workaround: When analyzers block merge (e.g. Dry Run Build on non-Brazil packages), use Actions → Override & merge to bypass requirements
+- Midway auth constraints: Requires custom .amazon.com/.amazon.dev domain for cookies. CloudFront .cloudfront.net URLs won't work. Unfabric sites can't use WAF IP restriction (no corp network).
+- Testing preference: Run comprehensive integration tests locally before pushing to production
+- Bug fix workflow: Fix all issues in single batch, test comprehensively, then push together to avoid multiple deployments
+- MCP setup: aws-outlook-mcp configured with direct Node v22 path + write tools enabled (later disabled), m365-mcp (GRASP) v0.13 installed as primary M365 provider
+- Morning briefing: Weekday 8:30 AM SGT cron (9a6d85ad) — mnharidz's tickets only (SIN18/SIN100), site-wide trending issues, calendar, MCM activity, daily checklist, email highlights. Run manually if laptop not logged in at scheduled time.
+- macOS limitation: LaunchAgents blocked on corp-managed Mac, use server-side cron instead
+- Email tool approval: kiro-cli prompts for approval before any write action (send/reply/forward), no auto-approve for email tools
+- Slack tool limitation: send_message only sends to user's own DM, cannot DM other users directly
+- Process cleanup: Periodically kill stale kiro-cli sessions to prevent resource bloat from accumulated subagent spawns. Auto-cleanup meshclaw-lite processes after subagent tasks complete.
+- Email sender preference: Shared team DL for project notifications, not personal email addresses
+- AutoSIM validation: Check existing production rules for working patterns before implementing new approaches
+- AutoSIM development: Always verify API methods exist in production rules before using - check code.amazon.com for real examples
